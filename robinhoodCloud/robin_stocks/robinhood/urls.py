@@ -89,6 +89,9 @@ def phoenix_url():
 def positions_url():
     return('https://api.robinhood.com/positions/')
 
+def auto_investment_url():
+    return('https://api.robinhood.com/auto_investment/schedules')
+
 def banktransfers_url(direction=None):
     if direction == 'received':
         return('https://api.robinhood.com/ach/received/transfers/')
