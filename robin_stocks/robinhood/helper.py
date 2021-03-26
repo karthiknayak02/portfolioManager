@@ -3,8 +3,11 @@
 from functools import wraps
 
 import requests
-from robin_stocks.robinhood.globals import LOGGED_IN, OUTPUT, SESSION
+from robin_stocks.robinhood.globals import LOGGED_IN, OUTPUT
+import aiohttp
+import asyncio
 
+SESSION = await getSession()
 
 def set_login_state(logged_in):
     """Sets the login state"""
@@ -230,7 +233,7 @@ def inputs_to_set(inputSymbols):
     return(symbols_list)
 
 
-def request_document(url, payload=None):
+async def request_document(url, payload=None):
     """Using a document url, makes a get request and returnes the session data.
 
     :param url: The url to send a get request to.
@@ -239,8 +242,8 @@ def request_document(url, payload=None):
 
     """ 
     try:
-        res = SESSION.get(url, params=payload)
-        res.raise_for_status()
+        async with SESSION.get(url, params=payload) as res:
+            res.raise_for_status()
     except requests.exceptions.HTTPError as message:
         print(message, file=get_output())
         return(None)
@@ -248,7 +251,7 @@ def request_document(url, payload=None):
     return(res)
 
 
-def request_get(url, dataType='regular', payload=None, jsonify_data=True):
+async def request_get(url, dataType='regular', payload=None, jsonify_data=True):
     """For a given url and payload, makes a get request and returns the data.
 
     :param url: The url to send a get request to.
@@ -272,15 +275,15 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
     res = None
     if jsonify_data:
         try:
-            res = SESSION.get(url, params=payload)
-            res.raise_for_status()
-            data = res.json()
+            async with SESSION.get(url, params=payload) as res:
+                res.raise_for_status()
+                data = res.json()
         except (requests.exceptions.HTTPError, AttributeError) as message:
             print(message, file=get_output())
             return(data)
     else:
-        res = SESSION.get(url, params=payload)
-        return(res)
+        async with SESSION.get(url, params=payload) as res:
+            return(res)
     # Only continue to filter data if jsonify_data=True, and Session.get returned status code <200>.
     if (dataType == 'results'):
         try:
@@ -301,9 +304,9 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
             print('Found Additional pages.', file=get_output())
         while nextData['next']:
             try:
-                res = SESSION.get(nextData['next'])
-                res.raise_for_status()
-                nextData = res.json()
+                async with SESSION.get(nextData['next']) as resp:
+                    res.raise_for_status()
+                    nextData = res.json()
             except:
                 print('Additional pages exist but could not be loaded.', file=get_output())
                 return(data)
@@ -323,7 +326,7 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
     return(data)
 
 
-def request_post(url, payload=None, timeout=16, json=False, jsonify_data=True):
+async def request_post(url, payload=None, timeout=16, json=False, jsonify_data=True):
     """For a given url and payload, makes a post request and returns the response. Allows for responses other than 200.
 
     :param url: The url to send a post request to.
@@ -344,11 +347,12 @@ def request_post(url, payload=None, timeout=16, json=False, jsonify_data=True):
     try:
         if json:
             update_session('Content-Type', 'application/json')
-            res = SESSION.post(url, json=payload, timeout=timeout)
-            update_session(
-                'Content-Type', 'application/x-www-form-urlencoded; charset=utf-8')
+            async with SESSION.post(url, json=payload, timeout=timeout) as res:
+                update_session(
+                    'Content-Type', 'application/x-www-form-urlencoded; charset=utf-8')
         else:
-            res = SESSION.post(url, data=payload, timeout=timeout)
+            async with SESSION.post(url, data=payload, timeout=timeout) as res:
+                pass
         data = res.json()
     except Exception as message:
         print("Error in request_post: {0}".format(message), file=get_output())
@@ -359,7 +363,7 @@ def request_post(url, payload=None, timeout=16, json=False, jsonify_data=True):
         return(res)
 
 
-def request_delete(url):
+async def request_delete(url):
     """For a given url and payload, makes a delete request and returns the response.
 
     :param url: The url to send a delete request to.
@@ -368,9 +372,9 @@ def request_delete(url):
 
     """
     try:
-        res = SESSION.delete(url)
-        res.raise_for_status()
-        data = res
+        async with SESSION.delete(url) as res:
+            res.raise_for_status()
+            data = res
     except Exception as message:
         data = None
         print("Error in request_delete: {0}".format(message), file=get_output())
