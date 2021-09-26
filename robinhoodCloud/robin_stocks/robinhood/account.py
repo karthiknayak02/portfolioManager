@@ -889,6 +889,7 @@ def build_holdings_list():
             instrument_data = get_instrument_by_url(item['instrument'])
             symbol = instrument_data['symbol']
             price = get_latest_price(instrument_data['symbol'])[0]
+            fundamental_data = get_fundamentals(symbol)[0]
 
             quantity = item['quantity']
             equity = float(item['quantity']) * float(price)
@@ -912,7 +913,14 @@ def build_holdings_list():
                        'type': instrument_data['type'],
                        'name': get_name_by_symbol(symbol),
                        'id': instrument_data['id'],
-                       'percentage': "{0:.2f}".format(percentage)}
+                       'percentage': "{0:.2f}".format(percentage),
+                       'pe_ratio': fundamental_data['pe_ratio'],
+                       'market_cap': fundamental_data['market_cap'],
+                       'high_52_weeks': fundamental_data['high_52_weeks'],
+                       'low_52_weeks': fundamental_data['low_52_weeks'],
+                       'num_employees': fundamental_data['num_employees'],
+                       'year_founded': fundamental_data['year_founded']
+                       }
 
             holdings_list.append(holding)
 
