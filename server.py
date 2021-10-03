@@ -10,8 +10,8 @@ import schema
 def login():
     # replace with env variable
 
-    login_log = rh.login(username="***REMOVED***",
-                         password="***REMOVED***",
+    login_log = rh.login(username="<>",
+                         password="<>",
                          expiresIn=60*60*24,
                          by_sms=True)
 
